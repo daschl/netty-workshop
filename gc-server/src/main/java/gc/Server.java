@@ -1,5 +1,7 @@
 package gc;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import gc.binary.BinaryServerInitializer;
 import gc.http.HttpServerInitializer;
 import io.netty.bootstrap.ServerBootstrap;
@@ -16,19 +18,25 @@ public class Server {
     private static final int BINARY_PORT = 9090;
 
     public static void main(String... args) throws Exception {
+
+        Cache<Long, String> dataCache = CacheBuilder.newBuilder()
+            .maximumSize(60)
+            .build();
+
+
         EventLoopGroup eventLoopGroup = new NioEventLoopGroup();
 
         try {
             ServerBootstrap httpBoostrap = new ServerBootstrap()
                 .group(eventLoopGroup)
                 .handler(new LoggingHandler(LogLevel.INFO))
-                .childHandler(new HttpServerInitializer())
+                .childHandler(new HttpServerInitializer(dataCache))
                 .channel(NioServerSocketChannel.class);
 
             ServerBootstrap binaryBootstrap = new ServerBootstrap()
                 .group(eventLoopGroup)
                 .handler(new LoggingHandler(LogLevel.INFO))
-                .childHandler(new BinaryServerInitializer())
+                .childHandler(new BinaryServerInitializer(dataCache))
                 .channel(NioServerSocketChannel.class);
 
 
